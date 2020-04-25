@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<head>
+    <title>Edit Barang</title>
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="node_modules/select2/dist/css/select2.min.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Barang</a>
+    </nav>
+    <div class="container">
+        <form>
+            <input type="hidden" id="id" autofocus>
+            <div class="form-group">
+                <label>Masukkan Barang: </label>
+                <input type="text" id="item" autofocus>
+            </div>
+            <div class="form-group">
+                <label>Masukkan Harga: </label>
+                <input type="number" id="price" autofocus>
+            </div>
+            <button class="btn btn-success" type="submit">Update</button>
+        </form>
+    </div>
+
+    <script>
+        if (typeof module === 'object') {window.module = module; module = undefined}
+    </script>
+    <script src="./node_modules/jquery/dist/jquery.min.js" onload="window.$ = window.jQuery = module.exports"></script>
+    <script src="./node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="./node_modules/select2/dist/js/select2.min.js"></script>
+    <script>
+        if (window.module) module = window.module;
+    </script>
+    <script>
+        const electron = require('electron')
+        const {ipcRenderer} = electron
+
+        const form = document.querySelector('form')
+        form.addEventListener('submit', submitForm)
+
+        function submitForm(e){
+            e.preventDefault()
+            const item = {
+                id: document.querySelector('#id').value,
+                name: document.querySelector('#item').value,
+                price: document.querySelector('#price').value
+            }
+            
+            ipcRenderer.send('item:update', item)
+        }
+
+        ipcRenderer.on('item:edit', function(e, item){
+            console.log(item)
+            $('#id').val(item.id)
+            $('#item').val(item.name)
+            $('#price').val(item.price)
+        })
+
+        $('select').select2()
+
+        function deleteItem(item){
+            ipcRenderer.send('item:delete', item)
+        }
+
+        function editItem(item){
+            ipcRenderer.send('item:edit', item)
+        }
+    </script>
+</body>
+</html>

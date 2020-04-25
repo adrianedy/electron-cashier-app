@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<head>
+    <title>Kasir Sederhana</title>
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="node_modules/select2/dist/css/select2.min.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Kasir</a>
+    </nav>
+    <div class="container">
+        <form class="p-3">
+            <select class="w-75">
+
+            </select>
+            <button type="submit" class="btn btn-primary">Tambah Barang</button>
+        </form>
+        <ul class="list-group">
+
+        </ul>
+        <hr/>
+        <div>
+            <h3>Total Harga: <span class="total"></span></h3>
+        </div>
+        <button class="btn btn-danger" onclick="reset()">Reset</button>
+    </div>
+    <script>
+        if (typeof module === 'object') {window.module = module; module = undefined}
+    </script>
+    <script src="./node_modules/jquery/dist/jquery.min.js" onload="window.$ = window.jQuery = module.exports"></script>
+    <script src="./node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="./node_modules/select2/dist/js/select2.min.js"></script>
+    <script>
+        if (window.module) module = window.module;
+    </script>
+    <script>
+        const electron = require('electron')
+        const {ipcRenderer} = electron
+        const _ = require('lodash')
+        let itemList, cart = []
+
+        const form = document.querySelector('form')
+        form.addEventListener('submit', submitForm)
+
+        function submitForm(e){
+            e.preventDefault()
+            let id = $('select').children('option:selected').val()
+
+            let item = _.find(itemList, ['id', id])
+            cart.push(item)
+
+            $('ul').append(`<li class="list-group-item">${item.name} Rp. ${item.price}</li>`)
+
+            let total = 0
+            $.each(cart, function(i, item){
+                total += parseInt(item.price)
+            })
+            $('.total').empty()
+            $('.total').append(total)
+        }
+
+        ipcRenderer.on('item:refresh', function(e, items){
+            itemList = items
+            $('select').empty()
+
+            $.each(items, function(i, item) {
+                $('select').append(`<option value="${item.id}">${item.name}</option>`)
+            })
+        })
+
+        $('select').select2()
+        $('b[role="presentation"]').hide()
+
+        function reset(){
+            cart = []
+            $('ul').empty()
+            $('.total').text(0)
+        }
+    </script>
+</body>
+</html>
