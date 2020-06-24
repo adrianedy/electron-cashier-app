@@ -2,12 +2,25 @@ const electron = require('electron')
 const url = require('url')
 const path = require('path')
 const _ = require('lodash')
+const fs = require('fs')
 
 const {app, BrowserWindow, Menu, ipcMain} = electron
 
 process.env.NODE_ENV = 'production'
 
-let mainWindow, itemWindow, editWindow, itemList=[]
+let mainWindow, itemWindow, editWindow, historyWindow, itemList = [], history = []
+
+fs.readFile("db_item.json", (err, jsonItem) => {
+    if(!err) {
+        itemList = JSON.parse(jsonItem)
+    }
+})
+
+fs.readFile("db_history.json", (err, jsonHistory) => {
+    if(!err) {
+        history = JSON.parse(jsonHistory)
+    }
+})
 
 app.on('ready', function (){
     mainWindow = new BrowserWindow({
@@ -23,7 +36,11 @@ app.on('ready', function (){
     }))
 
     mainWindow.on('closed', function(){
+        fs.writeFileSync('db_item.json', JSON.stringify(itemList))
+        fs.writeFileSync('db_history.json', JSON.stringify(history))
+
         app.quit()
+        mainWindow = null
     })
 
     const mainMenu = Menu.buildFromTemplate(mainMenuTemplate)
@@ -72,6 +89,25 @@ function createEditWindow(){
     })
 }
 
+function createHistoryWindow(){
+    historyWindow = new BrowserWindow({
+        webPreferences: {
+            nodeIntegration: true
+        }
+    })
+    historyWindow.setMenu(null)
+    
+    historyWindow.loadURL(url.format({
+        pathname: path.join(__dirname, 'history.html'),
+        protocol: 'file:',
+        slashes: true
+    }))
+
+    historyWindow.on('close', function(){
+        historyWindow = null
+    })
+}
+
 ipcMain.on('item:add', function(e, item){
     itemList.push(item)
     itemWindow.webContents.send('item:refresh', itemList)
@@ -105,7 +141,29 @@ ipcMain.on('item:delete', function(e, item){
 })
 
 ipcMain.on('item:refresh', function(e, item){
-    itemWindow.webContents.send('item:refresh', itemList)
+    mainWindow.webContents.send('item:refresh', itemList)
+    if (itemWindow) {
+        itemWindow.webContents.send('item:refresh', itemList)
+    }
+})
+
+ipcMain.on('item-list:update', function(e, updateList){
+    itemList = updateList
+    mainWindow.webContents.send('item:refresh', itemList)
+    if (itemWindow) {
+        itemWindow.webContents.send('item:refresh', itemList)
+    }
+})
+
+ipcMain.on('history:refresh', function(e, item){
+    historyWindow.webContents.send('history:refresh', history)
+})
+
+ipcMain.on('order:save', function(e, cart){
+    history = _.concat(history, cart)
+    if (historyWindow) {
+        historyWindow.webContents.send('history:refresh', history)
+    }
 })
 
 const mainMenuTemplate = [
@@ -113,6 +171,12 @@ const mainMenuTemplate = [
         label: 'Atur Barang',
         click(){
             createItemWindow()
+        }
+    },
+    {
+        label: 'History',
+        click(){
+            createHistoryWindow()
         }
     },
 ]

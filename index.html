@@ -14,15 +14,17 @@
 
             </select>
             <button type="submit" class="btn btn-primary">Tambah Barang</button>
+            <input class="form-control" style="width:5rem" type="number" id="qty" placeholder="Qty" value="1">
         </form>
         <ul class="list-group">
 
         </ul>
         <hr/>
         <div>
-            <h3>Total Harga: <span class="total"></span></h3>
+            <h3>Total Harga: Rp.<span class="total">0</span></h3>
         </div>
         <button class="btn btn-danger" onclick="reset()">Reset</button>
+        <button class="btn btn-success" onclick="save()">Save</button>
     </div>
     <script>
         if (typeof module === 'object') {window.module = module; module = undefined}
@@ -38,6 +40,8 @@
         const {ipcRenderer} = electron
         const _ = require('lodash')
         let itemList, cart = []
+        
+        ipcRenderer.send('item:refresh', '')
 
         const form = document.querySelector('form')
         form.addEventListener('submit', submitForm)
@@ -45,15 +49,36 @@
         function submitForm(e){
             e.preventDefault()
             let id = $('select').children('option:selected').val()
+            let qty = $('#qty').val()
 
             let item = _.find(itemList, ['id', id])
-            cart.push(item)
+            let inCart = _.find(cart, ['id', id])
+            let cartQty =  inCart ? inCart.qty : 0
+            if (item.qty - cartQty >= qty) {
+                var today = new Date();
+                var dd = String(today.getDate()).padStart(2, '0');
+                var mm = String(today.getMonth() + 1).padStart(2, '0');
+                var yyyy = today.getFullYear();
 
-            $('ul').append(`<li class="list-group-item">${item.name} Rp. ${item.price}</li>`)
+                today = dd + '/' + mm + '/' + yyyy;
+                if (cartQty > 0) {
+                    _.find(cart, ['id', item.id]).qty += parseInt(qty)
+                } else {
+                    clone = _.clone(item)
+                    clone.qty = parseInt(qty)
+                    clone.date = today
+                    cart.push(clone)
+                }
+            }
+
+            $('ul').empty()
+            $.each(cart, function(i, item) {
+                $('ul').append(`<li class="list-group-item">${item.name} Rp. ${item.price} Qty: ${item.qty}</li>`)
+            })
 
             let total = 0
             $.each(cart, function(i, item){
-                total += parseInt(item.price)
+                total += parseInt(item.price) * parseInt(item.qty)
             })
             $('.total').empty()
             $('.total').append(total)
@@ -64,7 +89,9 @@
             $('select').empty()
 
             $.each(items, function(i, item) {
-                $('select').append(`<option value="${item.id}">${item.name}</option>`)
+                if (item.qty > 0) {
+                    $('select').append(`<option value="${item.id}">${item.name}</option>`)
+                }
             })
         })
 
@@ -75,6 +102,15 @@
             cart = []
             $('ul').empty()
             $('.total').text(0)
+        }
+
+        function save(){
+            $.each(cart, function(i, item) {
+                _.find(itemList, ['id', item.id]).qty -= item.qty
+            })
+            ipcRenderer.send('item-list:update', itemList)
+            ipcRenderer.send('order:save', cart)
+            reset()
         }
     </script>
 </body>

@@ -19,6 +19,10 @@
                 <label>Masukkan Harga: </label>
                 <input type="number" id="price" autofocus>
             </div>
+            <div class="form-group">
+                <label>Masukkan Kuantitas: </label>
+                <input type="number" id="qty" autofocus>
+            </div>
             <button class="btn btn-success" type="submit">Update</button>
         </form>
     </div>
@@ -44,17 +48,18 @@
             const item = {
                 id: document.querySelector('#id').value,
                 name: document.querySelector('#item').value,
-                price: document.querySelector('#price').value
+                price: document.querySelector('#price').value,
+                qty: document.querySelector('#qty').value
             }
             
             ipcRenderer.send('item:update', item)
         }
 
         ipcRenderer.on('item:edit', function(e, item){
-            console.log(item)
             $('#id').val(item.id)
             $('#item').val(item.name)
             $('#price').val(item.price)
+            $('#qty').val(item.qty)
         })
 
         $('select').select2()

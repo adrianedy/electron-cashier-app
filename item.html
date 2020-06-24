@@ -18,6 +18,10 @@
                 <label>Masukkan Harga: </label>
                 <input type="number" id="price" autofocus>
             </div>
+            <div class="form-group">
+                <label>Masukkan Kuantitas: </label>
+                <input type="number" id="qty" autofocus>
+            </div>
             <button class="btn btn-success" type="submit">Tambah Barang</button>
         </form>
         <hr/>
@@ -51,7 +55,8 @@
             const item = {
                 id: uuid(),
                 name: document.querySelector('#item').value,
-                price: document.querySelector('#price').value
+                price: document.querySelector('#price').value,
+                qty: document.querySelector('#qty').value
             }
 
             ipcRenderer.send('item:add', item)
@@ -61,12 +66,12 @@
             $('ul').empty()
             $.each(items, function(i, item) {
                 $('ul').append(`
-                    <li class="list-group-item">${item.name} Rp. ${item.price} 
+                    <li class="list-group-item">${item.name} Rp. ${item.price} Qty: ${item.qty} 
                         <div class="float-right">
-                        <button class="btn btn-warning" onclick="editItem('${item.id}')">Edit</button></i>
+                        <button class="btn btn-warning" onclick="editItem('${item.id}')">Edit</button>
                         <button class="btn btn-danger" onclick="deleteItem('${item.id}')">Delete</button>
                         </div>
-                    </i>
+                    </li>
                 `)
             })
         })

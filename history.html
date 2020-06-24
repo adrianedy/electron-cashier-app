@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<head>
+    <title>History</title>
+    <link rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="node_modules/select2/dist/css/select2.min.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">History Pembelian</a>
+    </nav>
+    <div class="container mt-3">
+        <ul class="list-group">
+
+        </ul>
+    </div>
+
+    <script>
+        if (typeof module === 'object') {window.module = module; module = undefined}
+    </script>
+    <script src="./node_modules/jquery/dist/jquery.min.js" onload="window.$ = window.jQuery = module.exports"></script>
+    <script src="./node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script>
+        if (window.module) module = window.module;
+    </script>
+    <script>
+        const electron = require('electron')
+        const {ipcRenderer} = electron
+        
+        ipcRenderer.send('history:refresh', '')
+
+        ipcRenderer.on('history:refresh', function(e, items){
+            $('ul').empty()
+            $.each(items, function(i, item) {
+                $('ul').append(`
+                    <li class="list-group-item">${item.name} Rp. ${item.price} Qty: ${item.qty} Date: ${item.date}</li>
+                `)
+            })
+        })
+    </script>
+</body>
+</html>
